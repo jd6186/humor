@@ -1,27 +1,40 @@
 import { Injectable } from '@nestjs/common';
-import {User} from "./interfaces/users.interface";
+import {InjectRepository} from "@nestjs/typeorm";
+import {UserEntity} from "../../core/entity/user.entity";
+import {Repository} from "typeorm";
 
 @Injectable()
 export class UsersService {
-    private readonly users: User[] = [];
+    constructor(
+        @InjectRepository(UserEntity)
+        private usersRepository: Repository<UserEntity>,
+    ) {}
 
-    findAll(): string {
-        return 'This action returns all users';
+    findAll(): Promise<UserEntity[]> {
+        return this.usersRepository.find();
     }
 
-    findOne(id: number): string {
-        return `This action returns a #${id} user`;
+    findOne(userId: number): Promise<UserEntity | null> {
+        return this.usersRepository.findOneBy({ userId });
     }
 
-    findOneByLoginId(loginId: string): User{
-        return this.users.pop()
+    findOneByLoginId(loginId: string): Promise<UserEntity | null> {
+        return this.usersRepository.findOne({ where: { loginId } });
     }
 
-    findAllUserList(): User[] {
-        return this.users;
+    // join을 해야할 경우
+    // findOneByLoginId(loginId: string): Promise<UserEntity | null> {
+    //     return this.usersRepository.createQueryBuilder('user')
+    //         .leftJoinAndSelect('user.userDetail', 'userDetail')
+    //         .where('user.loginId = :loginId', { loginId })
+    //         .getOne();
+    // }
+
+    async create(user: UserEntity): Promise<void> {
+        await this.usersRepository.save(user); // DB에 Write하는 부분은 await를 붙여준다.
     }
 
-    create(user: User) {
-        this.users.push(user);
+    async remove(id: number): Promise<void> {
+        await this.usersRepository.delete(id); // DB에 Write하는 부분은 await를 붙여준다.
     }
 }

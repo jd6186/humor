@@ -2,15 +2,28 @@ import {MiddlewareConsumer, Module, NestModule, RequestMethod} from '@nestjs/com
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UsersModule } from "./api/users/users.module";
+import { TypeOrmModule } from '@nestjs/typeorm';
 import {LoggerMiddleware} from "./core/middleware/logger.middleware";
 import {APP_FILTER, APP_GUARD} from '@nestjs/core';
 import {AllExceptionsFilter} from "./core/filter/exception.filter";
 import {AuthGuard} from "./core/scurity/auth.guard";
 import {AuthModule} from "./api/guest/auth.module";
 import {TokenModule} from "./api/guest/token.module";
+import {UserEntity} from "./core/entity/user.entity";
 
 @Module({
-  imports: [UsersModule, AuthModule, TokenModule],
+  imports: [UsersModule, AuthModule, TokenModule,
+    TypeOrmModule.forRoot({
+      type: 'mysql',
+      host: '127.0.0.1',
+      port: 3306,
+      username: 'developer',
+      password: '1234',
+      database: 'humor',
+      entities: [UserEntity],
+      synchronize: false,
+    })
+  ],
   controllers: [AppController],
   providers: [AppService,
     {provide: APP_FILTER, useClass: AllExceptionsFilter},

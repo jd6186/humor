@@ -16,8 +16,8 @@ export class AuthGuard implements CanActivate {
         const request = context.switchToHttp().getRequest<Request>();
         const { url } = request;
 
-        // 특정 경로를 예외로 처리
-        const bypassUrls = ['/guest', '/another-public-route'];
+        // 특정 경로를 예외로 처리 > 이렇게만 해도 하위 경로는 모두 풀림
+        const bypassUrls = ['/guest', '/api', '/another-public-route'];
         if (bypassUrls.some(path => url.startsWith(path))) {
             return true; // 인증 건너뛰기
         }
@@ -27,15 +27,12 @@ export class AuthGuard implements CanActivate {
             throw new UnauthorizedException();
         }
         try {
-            const payload = await this.jwtService.verifyAsync(
+            request['user'] = await this.jwtService.verifyAsync(
                 token,
                 {
                     secret: jwtConstants.secret
                 }
             );
-            // 💡 We're assigning the payload to the request object here
-            // so that we can access it in our route handlers
-            request['user'] = payload;
         } catch {
             throw new UnauthorizedException();
         }
@@ -43,7 +40,9 @@ export class AuthGuard implements CanActivate {
     }
 
     private extractTokenFromHeader(request: Request): string | undefined {
+        console.log(request.headers)
         const [type, token] = request.headers.authorization?.split(' ') ?? [];
+        console.log(`token: ${token}`)
         return type === 'Bearer' ? token : undefined;
     }
 }

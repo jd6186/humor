@@ -1,6 +1,8 @@
 import { Controller, Post, Body, UnauthorizedException } from '@nestjs/common';
 import { TokenService } from './token.service';
+import {ApiTags} from "@nestjs/swagger";
 
+@ApiTags('guest')
 @Controller('guest/token')
 export class TokenController {
     constructor(private tokenService: TokenService) {}

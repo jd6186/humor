@@ -1,22 +1,22 @@
 import {Injectable, UnauthorizedException} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { User } from '../users/interfaces/users.interface';
 import {jwtConstants} from "../../core/scurity/jwtConstants";
+import {UserEntity} from "../../core/entity/user.entity";
 
 @Injectable()
 export class TokenService {
     constructor(private jwtService: JwtService) {}
 
-    async createAccessToken(user: User): Promise<string> {
-        const payload = { sub: user.userId, username: user.name };
+    async createAccessToken(user: UserEntity): Promise<string> {
+        const payload = { sub: user.userId, username: user.loginId };
         return this.jwtService.signAsync(payload, {
             secret: jwtConstants.secret,
-            expiresIn: '60s', // Access Token 유효 기간
+            expiresIn: '300s', // Access Token 유효 기간
         });
     }
 
-    async createRefreshToken(user: User): Promise<string> {
-        const payload = { sub: user.userId, username: user.name };
+    async createRefreshToken(user: UserEntity): Promise<string> {
+        const payload = { sub: user.userId, username: user.loginId };
         return this.jwtService.signAsync(payload, {
             secret: jwtConstants.refreshSecret,
             expiresIn: '7d', // Refresh Token 유효 기간
@@ -28,7 +28,7 @@ export class TokenService {
             const accessToken = await this.jwtService.verifyAsync(refreshToken, {
                 secret: jwtConstants.secret,
             });
-            const user = { userId: accessToken.sub, name: accessToken.username } as User
+            const user = { userId: accessToken.sub, loginId: accessToken.username } as UserEntity
             const newRefreshToken = await this.createRefreshToken(user);
             return {accessToken: accessToken, refreshToken: newRefreshToken};
         } catch (e) {
