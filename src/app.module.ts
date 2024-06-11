@@ -1,10 +1,29 @@
-import { Module } from '@nestjs/common';
+import {MiddlewareConsumer, Module, NestModule, RequestMethod} from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { UsersModule } from "./api/users/users.module";
+import {LoggerMiddleware} from "./core/middleware/logger.middleware";
+import {APP_FILTER, APP_GUARD} from '@nestjs/core';
+import {AllExceptionsFilter} from "./core/filter/exception.filter";
+import {AuthGuard} from "./core/scurity/auth.guard";
+import {AuthModule} from "./api/guest/auth.module";
+import {TokenModule} from "./api/guest/token.module";
 
 @Module({
-  imports: [],
+  imports: [UsersModule, AuthModule, TokenModule],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService,
+    {provide: APP_FILTER, useClass: AllExceptionsFilter},
+    {provide: APP_GUARD, useClass: AuthGuard,}
+  ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+        .apply(LoggerMiddleware)
+        .exclude({ path: 'guest', method: RequestMethod.ALL }) // guest 라우트에 대해서는 미들웨어를 적용하지 않겠다는 의미
+        .forRoutes({ path: '*', method: RequestMethod.ALL }) // 들어온 모든 요청에 대해 미들웨어를 적용하겠다는 의미
+        // .forRoutes('users'); // users 라우트에만 미들웨어를 적용하겠다는 의미
+        // .forRoutes(UsersController); // UsersController 라우트에만 미들웨어를 적용하겠다는 의미
+  }
+}
